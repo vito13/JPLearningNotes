@@ -92,11 +92,13 @@ sudo cat /etc/shadow
 
 - 使用win的vscode创建ssh连接，使用rockylinux用户
 - 创建/home/rockylinux/projects目录作为开发根目录，并用vscode进行开启
-- 按照git
+- 安装git
 
-```
-sudo dnf install git
-git --version
-git config --global user.name "vito13"
-git config --global user.email "vito13@163.com"
-git config --list
+    ```
+    sudo dnf install git
+    git --version
+    git config --global user.name "。。。。。。"
+    git config --global user.email "。。。。。。"
+    git config --list
+    git clone https://github.com/vito13/JPLearningNotes.git
+    ```
