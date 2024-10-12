@@ -12,6 +12,7 @@
     Password : rockylinux
     (to become root, use sudo su -)
     ```
+- 语言python
 
 ## log
 
@@ -36,16 +37,23 @@
     日语例句的英文释义文本  
     ```
 - 有几个技术点需要先解决，貌似没一样都挺难。。。开干，每天干一点
-    ```
-    搭建开发环境
-    找词库
-    找例句
-    找图片
-    中日英翻译
-    中日英音频
-    打包
-    发布
-    ```
+
+    |要做的事情|子项目|当前的状态|
+    |-|-|-|
+    |搭建开发环境||     
+    ||安装linux虚拟机|✔️|
+    ||设置vscode remote ssh|✔️|
+    ||安装python环境|✔️|
+    |找词库|  待开始  | 
+    |找例句|  待开始  | 
+    |找图片|   待开始 | 
+    |中日英翻译|  待开始  | 
+    |中日英音频| 待开始   | 
+    |打包| 待开始 | 
+    |发布| 待开始 | 
+
+ 
+
 
 ### 20241008
 
@@ -80,15 +88,15 @@
 
 - 设置用户拥有root权限
 
-```
-使用root修改/etc/sudoers文件，在root那行下面添加一行，进行添加权限
-root    ALL=(ALL)       ALL
-rockylinux    ALL=(ALL)       NOPASSWD:ALL
+    ```
+    使用root修改/etc/sudoers文件，在root那行下面添加一行，进行添加权限
+    root    ALL=(ALL)       ALL
+    rockylinux    ALL=(ALL)       NOPASSWD:ALL
 
-换回rockylinux，执行下面会打印出“root”与“所有账号密码”
-sudo whoami 
-sudo cat /etc/shadow
-```
+    换回rockylinux，执行下面会打印出“root”与“所有账号密码”
+    sudo whoami 
+    sudo cat /etc/shadow
+    ```
 
 - 使用win的vscode创建ssh连接，使用rockylinux用户
 - 创建/home/rockylinux/projects目录作为开发根目录，并用vscode进行开启
@@ -101,4 +109,55 @@ sudo cat /etc/shadow
     git config --global user.email "。。。。。。"
     git config --list
     git clone https://github.com/vito13/JPLearningNotes.git
+    ```
+
+### 20241012
+
+- vscode安装python扩展
+- 在终端里执行如下
+    ```
+        [rockylinux@rocky8 JPLearningNotes]$ python3 --version
+        Python 3.6.8
+        [rockylinux@rocky8 JPLearningNotes]$ python3 -m pip --version
+        pip 9.0.3 from /usr/lib/python3.6/site-packages (python 3.6)
+        
+        [rockylinux@rocky8 JPLearningNotes]$ sudo python3 -m pip install virtualenv
+        [rockylinux@rocky8 JPLearningNotes]$ sudo python3 -m pip install --upgrade pip
+        
+        创建虚拟环境
+        [rockylinux@rocky8 JPLearningNotes]$ python3 -m venv venv
+        使用虚拟环境
+        [rockylinux@rocky8 JPLearningNotes]$ source venv/bin/activate
+        可以使用 deactivate 退出, 使用 rm -rf venv 删除虚拟环境
+        
+        (venv) [rockylinux@rocky8 JPLearningNotes]$ pip freeze > requirements.txt
+        (venv) [rockylinux@rocky8 JPLearningNotes]$ pip install black
+    ```
+- 重启vscode，在command里选择Python: Select Interpreter，再选择带有venv的虚拟环境里的解释器
+- vscode左下角齿轮、settings、Python Formatting Provider、选择black
+- 在项目根目录创建src、test目录、和文件.gitignore，并将下面的内容放里面
+    ```
+    venv/
+    __pycache__/
+    *.pyc
+    .DS_Store
+    .vscode/
+    ```
+- 根目录建立文件.env，写入SECRET_KEY=xxx，保存，执行下面
+    ```
+    (venv) [rockylinux@rocky8 JPLearningNotes]$ pip install python-dotenv
+    ```
+- src内建立t.py，插入如下
+    ```
+    from dotenv import load_dotenv
+    import os
+
+    load_dotenv()
+    secret_key = os.getenv("SECRET_KEY")
+    print(secret_key)  # 打印 secret_key，检查是否加载成功
+    ```
+- 运行测试
+    ```
+    (venv) [rockylinux@rocky8 JPLearningNotes]$ python src/t.py 
+    xxx
     ```
