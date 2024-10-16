@@ -44,13 +44,22 @@
     ||安装linux虚拟机|✔️|
     ||设置vscode remote ssh|✔️|
     ||安装python环境|✔️|
-    |找词库|  待开始  | 
-    |找例句|  待开始  | 
-    |找图片|   待开始 | 
-    |中日英翻译|  待开始  | 
-    |中日英音频| 待开始   | 
-    |打包| 待开始 | 
-    |发布| 待开始 | 
+    |初步设计||
+    ||数据库设计|进行中|
+    |找词库||  待开始 |
+    |找例句||  待开始 |
+    |找图片||   待开始|
+    |中日英翻译||  待开始 |
+    |中日英音频|| 待开始  |
+    |开发|||
+    ||测试py库生成anki包|✔️|
+    ||可以生成包含图片的anki包|✔️|
+    ||可以生成包含音频的anki包|✔️|
+    ||解析anki包的音频|待开始|
+    ||解析anki包的图片|待开始|
+    ||解析anki包的数据结构|待开始|
+    ||重新组织解析出的anki包内的数据待己用|待开始|
+    |发布|| 待开始|
 
  
 
@@ -160,4 +169,214 @@
     ```
     (venv) [rockylinux@rocky8 JPLearningNotes]$ python src/t.py 
     xxx
+    ```
+
+### 20241013
+
+- vscode添加ssh免密
+    ```
+    执行 C:\Users\Administrator>ssh-keygen
+    将C:\Users\Administrator\.ssh\id_rsa.pub 拷贝到 /home/rockylinux/.ssh/
+    [rockylinux@rocky8 .ssh]$ cat id_rsa.pub >> authorized_keys
+    在 C:\Users\Administrator\.ssh\config 文件追加一行  IdentityFile "C:\Users\Administrator\.ssh\id_rsa"
+    ```
+- 数据库初步设计
+    
+    |字段|说明|类型|
+    |-|-|-|
+    |単語||
+    ||日本語の読み方|audio|
+    ||ふりがな|text|
+    ||英語|可选text|
+    ||中国語|可选text|
+    |配图||image|
+    |例句||
+    ||ふりがな|text|
+    ||読み方|audio|
+    ||英語|可选text|
+    ||中国語|可选text|
+    |笔记||image、text|
+    |level|N12345|number|
+    |词性|名动形副量|text|
+    |类别|食物、动物、家电。。。|text|
+
+- 待进行表设计
+
+### 20241014
+
+- 添加库用于测试生成apkg包
+
+    ```
+    pip install genanki
+    pip install pandas
+    ```
+
+- 测试仅最简包封装，包含2个字段，一条数据
+
+    ```
+    import genanki
+
+    # 定义一个模型（即卡片的模板）
+    my_model = genanki.Model(
+    1607392319,
+    'Simple Model',
+    fields=[
+        {'name': 'Question'},
+        {'name': 'Answer'},
+    ],
+    templates=[
+        {
+        'name': 'Card 1',
+        'qfmt': '{{Question}}',  # 这部分定义卡片的前面
+        'afmt': '{{FrontSide}}<hr id="answer">{{Answer}}',  # 这部分定义卡片的后面
+        },
+    ])
+
+    # 创建一个卡包（相当于一个牌组）
+    my_deck = genanki.Deck(
+    2059400110,
+    'Sample Deck')
+
+    # 添加卡片
+    my_note = genanki.Note(
+    model=my_model,
+    fields=['What is the capital of France?', 'Paris'])
+    my_deck.add_note(my_note)
+
+    # 保存卡包到文件
+    genanki.Package(my_deck).write_to_file('output.apkg')
+
+    ```
+
+### 20241015
+
+- 测试完成向包里加入图片的代码，pc端可见，但平板上依然见不到，待检查
+    ```
+    图片路径/home/rockylinux/projects/JPLearningNotes/res/img/456.jpg
+    代码/home/rockylinux/projects/JPLearningNotes/test/03_zip.py
+
+    import genanki
+
+    my_model = genanki.Model(
+    1380120064,
+    'Example',
+    fields=[
+        {'name': 'Object'},
+        {'name': 'Image'},
+    ],
+    templates=[
+        {
+        'name': 'Card 1',
+        'qfmt': '{{Object}}',
+        'afmt': '{{FrontSide}}<hr id="answer">{{Image}}',
+        },
+    ])
+
+    my_note = genanki.Note(
+    model=my_model,
+    fields=['JPEG File', '<img src="456.jpg" />'])
+
+    my_deck = genanki.Deck(
+    2059400191,
+    'Example')
+
+    my_deck.add_note(my_note)
+
+    my_package = genanki.Package(my_deck)
+    my_package.media_files = ['res/img']
+
+    my_package.write_to_file('456456.apkg')
+    ```
+
+### 20241016
+
+- 完成可以加入图片与音频的简单demo
+    
+    ```
+    import genanki
+    import os
+
+    # 定义一个Anki卡片包
+    my_deck = genanki.Deck(
+        1234567890,
+        'Demo Deck with Local Audio and Images')
+
+    # 定义Anki卡片的模板
+    my_model = genanki.Model(
+        987654321,
+        'Simple Audio and Image Model',
+        fields=[
+            {'name': 'Word'},
+            {'name': 'Definition'},
+            {'name': 'Audio'},
+            {'name': 'Image'},
+        ],
+        templates=[
+            {
+                'name': 'Card 1',
+                'qfmt': '{{Word}}<br>{{Audio}}<br>{{Image}}',
+                'afmt': '{{FrontSide}}<hr id="answer">{{Definition}}',
+            },
+        ])
+
+    # 生成示例数据
+    def get_demo_data():
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # 一个简单的词汇表
+        words = [
+            {
+                'word': 'apple',
+                'definition': 'A fruit that is typically red, green, or yellow.',
+                'audio_file': os.path.join(script_dir, '..', 'res', 'audio', '123.mp3'),
+                'image_file': os.path.join(script_dir, '..', 'res', 'img', '456.jpg')
+            },
+            {
+                'word': 'banana',
+                'definition': 'A long curved fruit which grows in clusters and has soft pulpy flesh.',
+                'audio_file': os.path.join(script_dir, '..', 'res', 'audio', '123.mp3'),
+                'image_file': os.path.join(script_dir, '..', 'res', 'img', '456.jpg')
+            },
+        ]
+        return words    
+
+    # 生成Anki卡片包
+    def create_anki_deck():
+        word_list = get_demo_data()
+        media_files = []
+
+        for item in word_list:
+            word = item['word']
+            definition = item['definition']
+            audio_file = item['audio_file']
+            image_file = item['image_file']
+
+            # 检查音频和图片文件是否存在
+            if os.path.exists(audio_file) and os.path.exists(image_file):
+                media_files.append(audio_file)
+                media_files.append(image_file)
+                my_note = genanki.Note(
+                    model=my_model,
+                    fields=[
+                        word,
+                        definition,
+                        f'[sound:{os.path.basename(audio_file)}]',
+                        f'<img src="{os.path.basename(image_file)}" />'
+                    ]
+                )
+                my_deck.add_note(my_note)
+            else:
+                if not os.path.exists(audio_file):
+                    print(f"音频文件不存在: {audio_file}")
+                if not os.path.exists(image_file):
+                    print(f"图片文件不存在: {image_file}")
+
+        # 创建Anki包
+        my_package = genanki.Package(my_deck)
+        my_package.media_files = media_files
+        my_package.write_to_file("demo_with_local_audio_and_images.apkg")
+        print("Anki卡片包生成成功：demo_with_local_audio_and_images.apkg")
+
+    if __name__ == '__main__':
+        create_anki_deck()
     ```
