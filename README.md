@@ -58,7 +58,8 @@
     ||解析anki包的音频|✔️|
     ||解析anki包的图片|✔️|
     ||解析anki包的数据结构|✔️|
-    ||重新组织解析出的anki包内的数据待己用|待开始|
+    ||创建包含卡片内容数据库|待开始|
+    ||添加导入方式|待开始|
     |发布|| 待开始|
 
  
@@ -381,6 +382,86 @@
         create_anki_deck()
     ```
 
-    - 使用anki导出时候勾选支持较久的版本
-    - 完成可以解析出anki的图片音频与卡片信息，但由于同一包内卡片排列顺序不一致，导致分割结果不同，待完善此处
-    - 另外不同模板的卡片字段数量也不一致，此处需要注意
+- 使用anki导出时候勾选支持较久的版本
+- 完成可以解析出anki的图片音频与卡片信息，但由于同一包内卡片排列顺序不一致，导致分割结不同，待完善此处
+- 另外不同模板的卡片字段数量也不一致，此处需要注意
+
+### 20241017
+
+- 对anki包进行解析初步完毕
+
+    ```
+    import zipfile
+    import sqlite3
+    import os
+    import csv
+    import json
+    def extract_apkg(apkg_path, extract_to):
+        with zipfile.ZipFile(apkg_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_to)
+    def parse_anki_db(db_path, media_json_path, media_dir, output_csv, updated_csv):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        # 加载媒体文件映射
+        with open(media_json_path, 'r', encoding='utf-8') as f:
+            media_mapping = json.load(f)
+        # 创建一个值到键的映射，因为我们要用 CSV 中的长名称查找简短文件名
+        value_to_key_mapping = {v: k for k, v in media_mapping.items()}
+        # 读取 CSV 文件并更新图片和音频字段
+        with open(output_csv, 'r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            fieldnames = reader.fieldnames
+            rows = []
+            for row in reader:
+                # 替换图片字段
+                if 'Sentence-Image' in row and row['Sentence-Image']:
+                    image_tag = row['Sentence-Image']
+                    # 提取图片文件名
+                    if 'src="' in image_tag:
+                        start = image_tag.index('src="') + len('src="')
+                        end = image_tag.index('"', start)
+                        image_filename = image_tag[start:end]
+                        if image_filename in value_to_key_mapping:
+                            new_image_filename = value_to_key_mapping[image_filename]
+                            # 用新的文件名替换原有的
+                            row['Sentence-Image'] = f'<img src="{new_image_filename}" />'
+                # 替换音频字段
+                audio_fields = ['Vocabulary-Audio', 'Sentence-Audio']
+                for field in audio_fields:
+                    if field in row and row[field]:
+                        audio_tag = row[field]
+                        # 提取音频文件名
+                        if 'sound:' in audio_tag:
+                            start = audio_tag.index('sound:') + len('sound:')
+                            end = audio_tag.index(']', start)
+                            audio_filename = audio_tag[start:end]
+                            if audio_filename in value_to_key_mapping:
+                                new_audio_filename = value_to_key_mapping[audio_filename]
+                                # 用新的文件名替换原有的
+                                row[field] = f'[sound:{new_audio_filename}]'
+                rows.append(row)
+        # 写入修改后的 CSV 文件，确保正确处理字段中的特殊字符
+        with open(updated_csv, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(row)
+        cursor.close()
+        conn.close()
+    def main():
+        apkg_path = '/home/rockylinux/projects/JPLearningNotes/test/0105.apkg'  # 修改为你的 Anki 包路径
+        extract_to = '/home/rockylinux/projects/JPLearningNotes/test/export'  # 解压文件的目标目录
+        output_csv = 'output.csv'  # 原始 CSV 输出文件
+        updated_csv = 'updated_output.csv'  # 修改后的 CSV 输出文件
+        # 步骤 1: 解压 .apkg 文件
+        extract_apkg(apkg_path, extract_to)
+        # 文件路径
+        db_path = os.path.join(extract_to, 'collection.anki21')
+        media_json_path = os.path.join(extract_to, 'media')
+        media_dir = extract_to
+        # 步骤 2: 解析数据库并更新 CSV
+        parse_anki_db(db_path, media_json_path, media_dir, output_csv, updated_csv)
+        print(f"更新后的 CSV 文件生成成功：{updated_csv}")
+    if __name__ == '__main__':
+        main()
+    ```
