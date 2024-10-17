@@ -6,3 +6,5 @@ __pycache__/
 res/
 .apkg
 test/
+out/
+ankipak/
