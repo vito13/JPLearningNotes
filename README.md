@@ -478,3 +478,35 @@
 - 测试了几个TTS组件，但好的不免费，免费的不好用
 - 调整获取资源的方式，改为以网络视频作为主要来源进行内容提取
 - 调整开发计划，更新开发目标
+- 升级python，原因是下载yt-dl无法运行在python3.6上
+    ```
+    [rockylinux@rocky8 JPLearningNotes]$ sudo dnf install epel-release
+    [rockylinux@rocky8 JPLearningNotes]$ sudo dnf install python39
+    [rockylinux@rocky8 JPLearningNotes]$ python3.9 --version
+    [rockylinux@rocky8 JPLearningNotes]$ sudo dnf install python39-pip
+    [rockylinux@rocky8 JPLearningNotes]$ pip3.9 --version
+    [rockylinux@rocky8 JPLearningNotes]$ mv venv venv_old
+    [rockylinux@rocky8 JPLearningNotes]$ python3.9 -m venv venv
+    [rockylinux@rocky8 JPLearningNotes]$ source venv/bin/activate
+    (venv) [rockylinux@rocky8 JPLearningNotes]$ pip install yt-dlp
+    (venv) [rockylinux@rocky8 JPLearningNotes]$ pip freeze > requirements.txt
+    ```
+- 安装vlc
+    ```
+    #> sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    #> sudo yum install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm
+    #> sudo yum install vlc
+    ```
+- 不要安装ffmpeg
+    ```
+    sudo dnf install snapd
+    sudo systemctl enable --now snapd.socket
+    sudo ln -s /var/lib/snapd/snap /snap
+    sudo reboot
+    sudo snap install ffmpeg
+    ffmpeg -version
+    ```
+
+### 20241019
+
+[rockylinux@rocky8 test2]$ ffmpeg -i /home/rockylinux/projects/JPLearningNotes/mov/1.mp4 -map a -codec:a aac /home/rockylinux/projects/JPLearningNotes/mov/1.aac
