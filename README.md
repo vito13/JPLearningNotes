@@ -509,4 +509,5 @@
 
 ### 20241019
 
-[rockylinux@rocky8 test2]$ ffmpeg -i /home/rockylinux/projects/JPLearningNotes/mov/1.mp4 -map a -codec:a aac /home/rockylinux/projects/JPLearningNotes/mov/1.aac
+[rockylinux@rocky8 test2]$ ffmpeg -i /home/rockylinux/projects/JPLearningNotes/mov/2.mp4 -map a -codec:a pcm_s16le /home/rockylinux/projects/JPLearningNotes/mov/2.wav
+
